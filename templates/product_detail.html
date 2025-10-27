@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Product Information -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-box me-2"></i>{{ product.name }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Product ID:</strong></td>
+                                    <td>{{ product.id }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Name:</strong></td>
+                                    <td>{{ product.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Current Quantity:</strong></td>
+                                    <td>
+                                        <span class="badge {{ 'bg-danger' if product.quantity == 0 else 'bg-warning text-dark' if product.quantity <= 5 else 'bg-success' }} fs-6">
+                                            {{ product.quantity }}
+                                        </span>
+                                        {% if product.quantity <= 5 %}
+                                        <i class="fas fa-exclamation-triangle text-danger ms-2" title="Low Stock"></i>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Location:</strong></td>
+                                    <td>
+                                        <i class="fas fa-map-marker-alt text-primary me-1"></i>
+                                        {{ product.location }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date Added:</strong></td>
+                                    <td>{{ product.date_added.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-primary" 
+                                        onclick="openEditModal({{ product.id }}, '{{ product.name }}', {{ product.quantity }}, '{{ product.location }}')">
+                                    <i class="fas fa-edit me-2"></i>Edit Product
+                                </button>
+                                <a href="{{ url_for('delete_product', product_id=product.id) }}" 
+                                   class="btn btn-danger" 
+                                   onclick="return confirm('Are you sure you want to delete {{ product.name }}?')">
+                                    <i class="fas fa-trash me-2"></i>Delete Product
+                                </a>
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6><i class="fas fa-chart-line me-2"></i>Quick Stats</h6>
+                </div>
+                <div class="card-body">
+                    {% set total_changes = stock_history|length %}
+                    {% set quantity_increases = stock_history|selectattr('quantity_change', '>', 0)|list|length %}
+                    {% set quantity_decreases = stock_history|selectattr('quantity_change', '<', 0)|list|length %}
+                    
+                    <div class="stat-item mb-3">
+                        <small class="text-muted">Total Stock Changes</small>
+                        <div class="h5 mb-0">{{ total_changes }}</div>
+                    </div>
+                    <div class="stat-item mb-3">
+                        <small class="text-muted">Stock Increases</small>
+                        <div class="h5 mb-0 text-success">{{ quantity_increases }}</div>
+                    </div>
+                    <div class="stat-item mb-3">
+                        <small class="text-muted">Stock Decreases</small>
+                        <div class="h5 mb-0 text-danger">{{ quantity_decreases }}</div>
+                    </div>
+                    {% if stock_history %}
+                    <div class="stat-item">
+                        <small class="text-muted">Last Updated</small>
+                        <div class="small">{{ stock_history[0].date_changed.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-history me-2"></i>Stock History</h5>
+                </div>
+                <div class="card-body">
+                    {% if stock_history %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Previous Quantity</th>
+                                    <th>New Quantity</th>
+                                    <th>Change</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for history in stock_history %}
+                                <tr>
+                                    <td>{{ history.date_changed.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ history.old_quantity }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ history.new_quantity }}</span>
+                                    </td>
+                                    <td>
+                                        {% set change = history.quantity_change %}
+                                        {% if change > 0 %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-arrow-up me-1"></i>+{{ change }}
+                                        </span>
+                                        {% elif change < 0 %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-arrow-down me-1"></i>{{ change }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-minus me-1"></i>0
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ history.change_reason or 'No reason specified' }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No stock history available</h6>
+                        <p class="text-muted">Stock changes will appear here when the product quantity is modified.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProductForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" id="editProductId" name="product_id">
+                    <div class="mb-3">
+                        <label for="editProductName" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="editProductName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProductQuantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="editProductQuantity" name="quantity" min="0" required>
+                        <small class="form-text text-muted">Current quantity: {{ product.quantity }}</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProductLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="editProductLocation" name="location" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function openEditModal(id, name, quantity, location) {
+        document.getElementById('editProductId').value = id;
+        document.getElementById('editProductName').value = name;
+        document.getElementById('editProductQuantity').value = quantity;
+        document.getElementById('editProductLocation').value = location;
+        document.getElementById('editProductForm').action = '/edit/' + id;
+        
+        new bootstrap.Modal(document.getElementById('editProductModal')).show();
+    }
+</script>
+{% endblock %}

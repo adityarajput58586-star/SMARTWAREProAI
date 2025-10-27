@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Warehouse Map - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-map me-2"></i>Warehouse Map</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-warehouse me-2"></i>Interactive Warehouse Layout
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="warehouse-map-container" class="position-relative" style="max-width: 100%; overflow: auto;">
+                    <!-- Warehouse map will be rendered here -->
+                    <div id="warehouse-map" class="position-relative" style="width: 800px; height: 600px; background: #f8f9fa; border: 2px solid #dee2e6; border-radius: 8px;">
+                        <!-- Map background -->
+                        <div class="position-absolute top-0 start-0 w-100 h-100" style="background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f8f9fa 75%), linear-gradient(-45deg, transparent 75%, #f8f9fa 75%); background-size: 20px 20px; background-position: 0 0, 0 10px, 10px -10px, -10px 0px; opacity: 0.1;"></div>
+                        
+                        <!-- Static warehouse layout elements -->
+                        <div class="position-absolute" style="top: 50px; left: 50px; width: 120px; height: 80px; background: #e9ecef; border: 2px solid #adb5bd; border-radius: 4px;">
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Receiving</small>
+                            </div>
+                        </div>
+                        
+                        <div class="position-absolute" style="top: 50px; right: 50px; width: 120px; height: 80px; background: #e9ecef; border: 2px solid #adb5bd; border-radius: 4px;">
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Shipping</small>
+                            </div>
+                        </div>
+                        
+                        <!--# thoughts
+This is a comprehensive warehouse management system that requires a Flask backend with SQLAlchemy, QR scanner functionality, interactive maps, and data export capabilities. I need to build a complete web application with authentication, product management, stock tracking, and various advanced features like barcode scanning and warehouse visualization.
+
+The key components I need to implement:
+1. Flask backend with SQLAlchemy models for Product and StockHistory
+2. Session-based authentication with hardcoded admin credentials
+3. Bootstrap UI with dark mode toggle
+4. QR/Barcode scanner using JavaScript camera access
+5. Interactive warehouse map with product location markers
+6. CSV and PDF export functionality
+7. Low stock alerts and stock history tracking
+8. Mobile-responsive design
+
+I'll use the provided folder structure as a guide and implement all the required functionality.
+
+# useful_guidelines_from_blueprints
+1. Listen on port 5000 when starting a server
+2. Use Flask with SQLAlchemy and proper database configuration
+3. Set secret_key using os.environ.get("SESSION_SECRET")
+4. Use Bootstrap for UI components and responsive design
+5. Avoid JSON APIs where possible, favor server-side rendering
+6. Use libraries for icons (Font Awesome), charts, and other assets
+7. Create production-ready, beautiful design
+
+# directory_structure
+```json
+[
+    {"path": "app.py", "status": "new"},
+    {"path": "main.py", "status": "new"},
+    {"path": "models.py", "status": "new"},
+    {"path": "templates/base.html", "status": "new"},
+    {"path": "templates/index.html", "status": "new"},
+    {"path": "templates/login.html", "status": "new"},
+    {"path": "templates/product_detail.html", "status": "new"},
+    {"path": "static/style.css", "status": "new"},
+    {"path": "static/js/qr-scanner.js", "status": "new"},
+    {"path": "static/js/warehouse-map.js", "status": "new"},
+    {"path": "static/warehouse-map.svg", "status": "new"}
+]

@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Low Stock Alert Section -->
+    {% if low_stock_products %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alert</h5>
+                <p class="mb-2">The following products have low stock (≤ 5 items):</p>
+                <div class="row">
+                    {% for product in low_stock_products %}
+                    <div class="col-md-6 col-lg-4 mb-2">
+                        <span class="badge bg-danger me-2">{{ product.quantity }}</span>
+                        <strong>{{ product.name }}</strong> ({{ product.location }})
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('dashboard') }}" class="row g-3">
+                        <div class="col-md-5">
+                            <label for="search" class="form-label">Search Products</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search }}" placeholder="Search by product name...">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="location" class="form-label">Filter by Location</label>
+                            <select class="form-select" id="location" name="location">
+                                <option value="">All Locations</option>
+                                {% for loc in locations %}
+                                <option value="{{ loc }}" {{ 'selected' if loc == location_filter }}>{{ loc }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Warehouse Map Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-map me-2"></i>Warehouse Map</h5>
+                </div>
+                <div class="card-body">
+                    <div id="warehouse-map-container" style="position: relative; width: 100%; height: 400px; border: 1px solid #ddd; border-radius: 5px;">
+                        <svg id="warehouse-map" width="100%" height="100%" viewBox="0 0 900 700">
+                            <!-- Warehouse map will be loaded here -->
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Products Table Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-boxes me-2"></i>Inventory ({{ products|length }} items)</h5>
+                    <div>
+                        {% if search %}
+                        <span class="badge bg-info">Search: "{{ search }}"</span>
+                        {% endif %}
+                        {% if location_filter %}
+                        <span class="badge bg-info">Location: "{{ location_filter }}"</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if products %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Name</th>
+                                    <th>Quantity</th>
+                                    <th>Location</th>
+                                    <th>Date Added</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products %}
+                                <tr class="{{ 'table-danger' if product.quantity <= 5 and product.quantity > 0 else 'table-warning' if product.quantity == 0 else '' }}">
+                                    <td>{{ product.id }}</td>
+                                    <td>
+                                        <strong>{{ product.name }}</strong>
+                                        {% if product.quantity <= 5 %}
+                                        <i class="fas fa-exclamation-triangle text-danger ms-1" title="Low Stock"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ 'bg-danger' if product.quantity == 0 else 'bg-warning text-dark' if product.quantity <= 5 else 'bg-success' }}">
+                                            {{ product.quantity }}
+                                        </span>
+                                    </td>
+                                    <td>{{ product.location }}</td>
+                                    <td>{{ product.date_added.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- View Details - All users -->
+                                            <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+                                               class="btn btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            <!-- Edit - All users can edit -->
+                                            <button type="button" class="btn btn-outline-warning" 
+                                                    onclick="openEditModal({{ product.id }}, '{{ product.name }}', {{ product.quantity }}, '{{ product.location }}')" 
+                                                    title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            
+                                            <!-- Delete - Only managers and admins -->
+                                            {% if session.role in ['admin', 'manager'] %}
+                                            <a href="{{ url_for('delete_product', product_id=product.id) }}" 
+                                               class="btn btn-outline-danger" 
+                                               onclick="return confirm('Are you sure you want to delete {{ product.name }}?')" 
+                                               title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No products found</h5>
+                        <p class="text-muted">
+                            {% if search or location_filter %}
+                            No products match your search criteria. Try adjusting your filters.
+                            {% else %}
+                            Start by adding your first product to the inventory.
+                            {% endif %}
+                        </p>
+                        {% if not search and not location_filter %}
+                        <button class="btn btn-primary" onclick="openAddProductModal()">
+                            <i class="fas fa-plus me-2"></i>Add First Product
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Product Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editProductForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" id="editProductId" name="product_id">
+                    <div class="mb-3">
+                        <label for="editProductName" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="editProductName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProductQuantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="editProductQuantity" name="quantity" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editProductLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="editProductLocation" name="location" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Product</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/warehouse-map.js') }}"></script>
+<script>
+    function openEditModal(id, name, quantity, location) {
+        document.getElementById('editProductId').value = id;
+        document.getElementById('editProductName').value = name;
+        document.getElementById('editProductQuantity').value = quantity;
+        document.getElementById('editProductLocation').value = location;
+        document.getElementById('editProductForm').action = '/edit/' + id;
+        
+        new bootstrap.Modal(document.getElementById('editProductModal')).show();
+    }
+    
+    // Initialize warehouse map
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeWarehouseMap();
+    });
+</script>
+{% endblock %}

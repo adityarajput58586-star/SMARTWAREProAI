@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}Add Product - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>Add New Product
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               placeholder="Enter product name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Initial Quantity</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               min="0" value="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="location" name="location" 
+                               placeholder="e.g., Aisle A, Shelf 1" required>
+                        <div class="form-text">Specify where this product is stored in your warehouse.</div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Add Product
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

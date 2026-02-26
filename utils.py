@@ -131,6 +131,82 @@ def suggest_storage_locations(product_name, quantity_needed, db, preferred_secti
     
     return suggestions
 
+def create_email_html(subject, body, notification_type='low_stock'):
+    """
+    Create a professional HTML email template matching the notification page style
+    """
+    # Determine badge color based on notification type
+    badge_colors = {
+        'low_stock': '#fbbf24',  # Yellow
+        'vendor_alert': '#3b82f6',  # Blue
+        'auto_reorder': '#10b981'  # Green
+    }
+    badge_color = badge_colors.get(notification_type, '#6366f1')
+    
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f3f4f6;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f3f4f6; padding: 20px;">
+            <tr>
+                <td align="center">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                        <!-- Header -->
+                        <tr>
+                            <td style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 30px; text-align: center;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
+                                    📦 SmartWare Pro
+                                </h1>
+                                <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 14px;">
+                                    Warehouse Management System
+                                </p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Content -->
+                        <tr>
+                            <td style="padding: 30px;">
+                                <table width="100%" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td>
+                                            <h2 style="margin: 0 0 20px 0; color: #1e293b; font-size: 20px; font-weight: 600;">
+                                                {subject}
+                                            </h2>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="background-color: #f8fafc; border-left: 4px solid {badge_color}; padding: 20px; border-radius: 4px;">
+                                            <div style="color: #475569; font-size: 14px; line-height: 1.6; white-space: pre-line;">
+{body}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                                <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                                    This is an automated notification from SmartWare Pro<br>
+                                    Please do not reply to this email
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+    return html
+
 def send_low_stock_alert(product, recipients, db):
     """
     Send low stock alert to managers, admins, and vendors
@@ -188,7 +264,7 @@ def send_low_stock_alert(product, recipients, db):
                     continue
                 
                 # Try to send email
-                success = send_email(email, subject, message_body)
+                success = send_email(email, subject, message_body, 'low_stock')
                 
                 # ALWAYS log notification regardless of email success
                 log = NotificationLog(
@@ -221,7 +297,7 @@ def send_low_stock_alert(product, recipients, db):
         """
         
         if is_valid_email(vendor_email):
-            success = send_email(vendor_email, subject, vendor_message)
+            success = send_email(vendor_email, subject, vendor_message, 'vendor_alert')
             
             # ALWAYS log notification
             log = NotificationLog(
@@ -249,6 +325,8 @@ def send_low_stock_alert(product, recipients, db):
             db.session.add(log)
             print(f"  ✓ Vendor notification logged: {vendor_email} - status: invalid_email")
     
+    # Flush and commit to ensure immediate persistence
+    db.session.flush()
     db.session.commit()
     print(f"✅ All notifications committed to database. Total sent: {len(notifications_sent)}")
     return notifications_sent
@@ -289,10 +367,11 @@ def send_auto_reorder_notification(product, vendor, db):
             status='invalid_email'
         )
         db.session.add(log)
+        db.session.flush()
         db.session.commit()
         return False
     
-    success = send_email(vendor.email, subject, message_body)
+    success = send_email(vendor.email, subject, message_body, 'auto_reorder')
     
     # ALWAYS log notification regardless of email success
     log = NotificationLog(
@@ -304,6 +383,7 @@ def send_auto_reorder_notification(product, vendor, db):
         status='sent' if success else 'failed'
     )
     db.session.add(log)
+    db.session.flush()
     db.session.commit()
     
     return success
@@ -321,7 +401,7 @@ def is_valid_email(email):
     return re.match(pattern, email) is not None
 
 
-def send_email(to_email, subject, body):
+def send_email(to_email, subject, body, notification_type='low_stock'):
     """
     Send email using SendGrid (primary) with SMTP fallback
     Reads configuration from environment variables
@@ -333,6 +413,9 @@ def send_email(to_email, subject, body):
     if not is_valid_email(to_email):
         print(f"⚠️  Skipping invalid email address: {to_email}")
         return False
+
+    # Create HTML email
+    html_content = create_email_html(subject, body, notification_type)
 
     # Try SendGrid first (works on Render)
     sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
@@ -348,7 +431,7 @@ def send_email(to_email, subject, body):
                 from_email=sender_email,
                 to_emails=to_email,
                 subject=subject,
-                html_content=f'<strong>{body}</strong>'
+                html_content=html_content
             )
 
             sg = SendGridAPIClient(sendgrid_api_key)
@@ -375,14 +458,12 @@ def send_email(to_email, subject, body):
             print(f"⚠️  No email service configured (SendGrid or SMTP)")
             return True
 
-        html_body = f"""<html><body style="font-family: Arial, sans-serif;"><div style="max-width: 600px; margin: 0 auto; padding: 20px;"><h2>{subject}</h2><div style="white-space: pre-line;">{body}</div></div></body></html>"""
-
         msg = MIMEMultipart('alternative')
         msg['From'] = f"SmartWare Pro <{smtp_user}>"
         msg['To'] = to_email
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))
-        msg.attach(MIMEText(html_body, 'html'))
+        msg.attach(MIMEText(html_content, 'html'))
 
         print(f"📧 Attempting to send email via SMTP to {to_email}...")
         socket.setdefaulttimeout(5)

@@ -296,7 +296,7 @@ def is_valid_email(email):
     # Basic email validation pattern
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     return re.match(pattern, email) is not None
-    return re.match(pattern, email) is not None
+
 
 def send_email(to_email, subject, body):
     """

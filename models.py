@@ -1,7 +1,12 @@
 from database import db
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import secrets
 import string
+
+def get_ist_time():
+    """Get current time in IST (UTC+5:30)"""
+    ist = timezone(timedelta(hours=5, minutes=30))
+    return datetime.now(ist)
 
 class AuthorizedUser(db.Model):
     """Owner-managed user credentials"""
@@ -206,7 +211,7 @@ class NotificationLog(db.Model):
     recipient_type = db.Column(db.String(20))  # 'manager', 'admin', 'vendor'
     message = db.Column(db.Text)
     status = db.Column(db.String(20), default='sent')  # 'sent', 'failed', 'pending'
-    sent_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    sent_date = db.Column(db.DateTime, nullable=False, default=get_ist_time)
     
     def __repr__(self):
         return f'<NotificationLog {self.notification_type} to {self.recipient_email}>'

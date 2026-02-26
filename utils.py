@@ -4,6 +4,7 @@ from flask import current_app
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from models import get_ist_time
 
 def suggest_storage_locations(product_name, quantity_needed, db, preferred_section_id=None, product_id=None):
     """
@@ -350,7 +351,7 @@ def send_auto_reorder_notification(product, vendor, db):
     This is an AUTOMATIC reorder. Please prepare and ship the stock.
     
     Warehouse: SmartWare Pro
-    Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+    Date: {get_ist_time().strftime('%Y-%m-%d %H:%M IST')}
     
     This is an automated request from SmartWare Pro Inventory System.
     """

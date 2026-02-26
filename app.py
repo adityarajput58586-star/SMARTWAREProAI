@@ -227,7 +227,7 @@ def login():
             
             if user and user.password == password:
                 # Update last login
-                user.last_login = datetime.utcnow()
+                user.last_login = datetime.now()
                 db.session.commit()
                 
                 session['logged_in'] = True
@@ -333,7 +333,7 @@ def add_product():
                         product_id=product.id,
                         section_id=section.id,
                         quantity=qty_to_store,
-                        arrival_date=datetime.utcnow()
+                        arrival_date=datetime.now()
                     )
                     db.session.add(batch)
                     
@@ -377,17 +377,22 @@ def add_product():
 @app.route('/delete/<int:product_id>')
 @manager_or_admin_required
 def delete_product(product_id):
-    """Delete product by ID"""
+    """Delete product by ID and update section usage"""
     product = Product.query.get_or_404(product_id)
+    product_name = product.name
     
+    # Delete associated stock batches (will be done automatically via cascade)
     # Delete associated stock history
     StockHistory.query.filter_by(product_id=product_id).delete()
     
-    # Delete the product
+    # Delete the product (this will cascade delete stock batches)
     db.session.delete(product)
     db.session.commit()
     
-    flash(f'Product "{product.name}" deleted successfully!', 'success')
+    # Update section usage to reflect freed space
+    update_section_usage(db)
+    
+    flash(f'Product "{product_name}" deleted successfully!', 'success')
     return redirect(url_for('dashboard'))
 
 @app.route('/edit/<int:product_id>', methods=['POST'])
@@ -499,7 +504,7 @@ def receive_stock(product_id):
                         product_id=product.id,
                         section_id=section.id,
                         quantity=qty_to_store,
-                        arrival_date=datetime.utcnow()
+                        arrival_date=datetime.now()
                     )
                     db.session.add(batch)
                     

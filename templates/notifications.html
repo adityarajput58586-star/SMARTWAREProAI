@@ -41,7 +41,10 @@
                             <tbody>
                                 {% for log in logs %}
                                 <tr>
-                                    <td>{{ log.sent_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <div>{{ log.sent_date.strftime('%d %b %Y') }}</div>
+                                        <small class="text-muted">{{ log.sent_date.strftime('%H:%M') }}</small>
+                                    </td>
                                     <td>
                                         <span class="badge {{ 'bg-warning text-dark' if log.notification_type == 'low_stock' else 'bg-info' if log.notification_type == 'vendor_alert' else 'bg-success' }}">
                                             {{ log.notification_type.replace('_', ' ').title() }}

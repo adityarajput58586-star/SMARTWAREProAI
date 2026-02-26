@@ -12,7 +12,7 @@ class AuthorizedUser(db.Model):
     name = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # admin, manager, employee, scanner
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     created_by = db.Column(db.String(50), default='owner')
     last_login = db.Column(db.DateTime)
     
@@ -46,7 +46,7 @@ class Vendor(db.Model):
     phone = db.Column(db.String(20))
     address = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True)
-    date_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_added = db.Column(db.DateTime, nullable=False, default=datetime.now)
     
     # Relationship to products
     products = db.relationship('Product', backref='vendor', lazy=True)
@@ -60,7 +60,7 @@ class WarehouseConfig(db.Model):
     total_space = db.Column(db.Integer, nullable=False, default=1000)  # Total warehouse capacity
     space_unit = db.Column(db.String(20), default='sq_meters')  # sq_meters, sq_feet, etc.
     warehouse_name = db.Column(db.String(100), default='Main Warehouse')
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
     
     @property
     def used_space(self):
@@ -119,7 +119,7 @@ class Product(db.Model):
     name = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False, default=0)
     location = db.Column(db.String(100), nullable=False)  # Legacy field, kept for compatibility
-    date_added = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_added = db.Column(db.DateTime, nullable=False, default=datetime.now)
     
     # New fields for enhanced functionality
     unit_type = db.Column(db.String(20), default='boxes')  # boxes, units, kg, etc.
@@ -172,7 +172,7 @@ class StockBatch(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     section_id = db.Column(db.Integer, db.ForeignKey('warehouse_section.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    arrival_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    arrival_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     batch_number = db.Column(db.String(50))  # Optional batch/lot number
     
     def __repr__(self):
@@ -187,7 +187,7 @@ class StockHistory(db.Model):
     change_reason = db.Column(db.String(200))
     change_type = db.Column(db.String(20))  # 'in', 'out', 'adjustment'
     section_name = db.Column(db.String(100))  # Which section was affected
-    date_changed = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    date_changed = db.Column(db.DateTime, nullable=False, default=datetime.now)
     
     @property
     def quantity_change(self):
@@ -206,7 +206,7 @@ class NotificationLog(db.Model):
     recipient_type = db.Column(db.String(20))  # 'manager', 'admin', 'vendor'
     message = db.Column(db.Text)
     status = db.Column(db.String(20), default='sent')  # 'sent', 'failed', 'pending'
-    sent_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    sent_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     
     def __repr__(self):
         return f'<NotificationLog {self.notification_type} to {self.recipient_email}>'
@@ -220,7 +220,7 @@ class SectionCapacityLog(db.Model):
     change_amount = db.Column(db.Integer, nullable=False)
     reason = db.Column(db.String(200))  # e.g., "Auto-extended for Product X"
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))  # Which product triggered it
-    changed_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    changed_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
     
     # Relationships
     section = db.relationship('WarehouseSection', backref='capacity_logs')

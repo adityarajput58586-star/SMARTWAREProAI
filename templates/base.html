@@ -31,11 +31,13 @@
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+                    {% if session.role != 'owner' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('dashboard') }}">
                             <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                         </a>
                     </li>
+                    {% endif %}
                     {% if session.role in ['admin', 'manager'] %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('vendors') }}">
@@ -56,7 +58,8 @@
                 </ul>
                 
                 <ul class="navbar-nav">
-                    <!-- Add Product - All logged in users can add -->
+                    {% if session.role != 'owner' %}
+                    <!-- Add Product - Staff only -->
                     <li class="nav-item">
                         <a href="{{ url_for('add_product') }}" class="btn btn-primary btn-sm me-2">
                             <i class="fas fa-plus"></i>
@@ -64,13 +67,14 @@
                         </a>
                     </li>
                     
-                    <!-- QR Scanner - All users -->
+                    <!-- QR Scanner - Staff only -->
                     <li class="nav-item">
                         <button class="btn btn-info btn-sm me-2" onclick="openScanModal()">
                             <i class="fas fa-qrcode"></i>
                             <span class="ms-1">Scan</span>
                         </button>
                     </li>
+                    {% endif %}
                     
                     <!-- Export - Only managers and admins -->
                     {% if session.role in ['admin', 'manager'] %}

@@ -434,9 +434,8 @@ def edit_product(product_id):
         # Update section usage after batch changes
         update_section_usage(db)
         
-        # Check if we need to trigger alerts
-        if new_quantity < old_quantity:  # Stock decreased
-            check_and_trigger_alerts(product, db)
+        # ALWAYS check threshold after quantity change (whether increase or decrease)
+        check_and_trigger_alerts(product, db)
     
     db.session.commit()
     flash(f'Product "{name}" updated successfully!', 'success')

@@ -165,9 +165,9 @@
                             {% endif %}
                         </p>
                         {% if not search and not location_filter %}
-                        <button class="btn btn-primary" onclick="openAddProductModal()">
+                        <a href="{{ url_for('add_product') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>Add First Product
-                        </button>
+                        </a>
                         {% endif %}
                     </div>
                     {% endif %}

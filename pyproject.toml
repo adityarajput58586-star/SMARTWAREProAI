@@ -18,8 +18,9 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "qrcode>=7.4.2",
     "reportlab>=4.4.2",
+    "sendgrid>=6.11.0",
     "sqlalchemy>=2.0.23",
-    "werkzeug>=3.0.1",
+    "werkzeug>=3.1",
 ]
 
 [tool.setuptools]

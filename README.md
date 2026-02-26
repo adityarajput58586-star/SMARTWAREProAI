@@ -25,9 +25,18 @@ pip install -r requirements.txt
 
 3. Configure environment variables in `.env`:
 ```
+# Option 1: SendGrid (Recommended for Render - works on free tier)
+SENDGRID_API_KEY=your-sendgrid-api-key
+EMAIL_USER=noreply@smartwarepro.com
+
+# Option 2: SMTP (Gmail - may be blocked on some platforms)
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
 ```
+
+**Note:** The system tries SendGrid first, then falls back to SMTP if SendGrid is not configured.
 
 4. Initialize the database:
 ```bash

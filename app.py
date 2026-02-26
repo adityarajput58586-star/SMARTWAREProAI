@@ -439,10 +439,12 @@ def edit_product(product_id):
         # Update section usage after batch changes
         update_section_usage(db)
         
-        # ALWAYS check threshold after quantity change (whether increase or decrease)
+        # Commit changes BEFORE checking alerts to ensure data is saved
+        db.session.commit()
+        
+        # ALWAYS check threshold after quantity change (alerts have their own commit)
         check_and_trigger_alerts(product, db)
     
-    db.session.commit()
     flash(f'Product "{name}" updated successfully!', 'success')
     return redirect(url_for('dashboard'))
 

@@ -323,103 +323,88 @@ def is_valid_email(email):
 
 def send_email(to_email, subject, body):
     """
-    Send email using SMTP (Gmail)
-    Reads configuration from environment variables or app config
-    Validates email address before attempting to send
+    Send email using SendGrid (primary) with SMTP fallback
+    Reads configuration from environment variables
     """
     import os
     import socket
-    
+
     # Validate email address first
     if not is_valid_email(to_email):
         print(f"⚠️  Skipping invalid email address: {to_email}")
         return False
-    
+
+    # Try SendGrid first (works on Render)
+    sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+    if sendgrid_api_key:
+        try:
+            print(f"📧 Attempting to send email via SendGrid to {to_email}...")
+            from sendgrid import SendGridAPIClient
+            from sendgrid.helpers.mail import Mail, Email, To, Content
+
+            sender_email = os.environ.get('EMAIL_USER', 'noreply@smartwarepro.com')
+
+            message = Mail(
+                from_email=Email(sender_email, "SmartWare Pro"),
+                to_emails=To(to_email),
+                subject=subject,
+                plain_text_content=Content("text/plain", body)
+            )
+
+            sg = SendGridAPIClient(sendgrid_api_key)
+            response = sg.send(message)
+
+            if response.status_code in [200, 201, 202]:
+                print(f"✅ Email sent successfully via SendGrid to {to_email}")
+                return True
+            else:
+                print(f"⚠️  SendGrid returned status {response.status_code}")
+        except ImportError:
+            print(f"⚠️  SendGrid library not installed")
+        except Exception as e:
+            print(f"❌ SendGrid error: {e}")
+
+    # Fallback to SMTP
     try:
-        # Get SMTP configuration from environment
         smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
         smtp_port = int(os.environ.get('SMTP_PORT', 587))
-        smtp_user = os.environ.get('EMAIL_USER')  # Use EMAIL_USER consistently
-        smtp_password = os.environ.get('EMAIL_PASSWORD')  # Use EMAIL_PASSWORD consistently
-        
-        # If no SMTP credentials, just log to console and return success
+        smtp_user = os.environ.get('EMAIL_USER')
+        smtp_password = os.environ.get('EMAIL_PASSWORD')
+
         if not smtp_user or not smtp_password:
-            print(f"\n{'='*60}")
-            print(f"📧 EMAIL NOTIFICATION (Console Mode - No SMTP Configured)")
-            print(f"{'='*60}")
-            print(f"To: {to_email}")
-            print(f"Subject: {subject}")
-            print(f"Body:\n{body}")
-            print(f"{'='*60}")
-            print(f"⚠️  To send real emails, configure SMTP settings in .env file")
-            print(f"{'='*60}\n")
+            print(f"⚠️  No email service configured (SendGrid or SMTP)")
             return True
-        
-        # Create HTML email
-        html_body = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb; border-radius: 10px;">
-                    <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
-                        <h1 style="color: white; margin: 0;">📦 SmartWare Pro</h1>
-                        <p style="color: rgba(255,255,255,0.9); margin: 5px 0 0 0;">Warehouse Management System</p>
-                    </div>
-                    <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                        <h2 style="color: #6366f1; margin-top: 0;">{subject}</h2>
-                        <div style="white-space: pre-line; color: #4b5563;">
-{body}
-                        </div>
-                        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
-                            This is an automated notification from SmartWare Pro<br>
-                            Please do not reply to this email
-                        </p>
-                    </div>
-                </div>
-            </body>
-        </html>
-        """
-        
-        # Create message
+
+        html_body = f"""<html><body style="font-family: Arial, sans-serif;"><div style="max-width: 600px; margin: 0 auto; padding: 20px;"><h2>{subject}</h2><div style="white-space: pre-line;">{body}</div></div></body></html>"""
+
         msg = MIMEMultipart('alternative')
         msg['From'] = f"SmartWare Pro <{smtp_user}>"
         msg['To'] = to_email
         msg['Subject'] = subject
-        
-        # Attach both plain text and HTML versions
         msg.attach(MIMEText(body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
-        
-        # Send email with timeout
-        print(f"📧 Attempting to send email to {to_email}...")
-        
-        # Set socket timeout to prevent hanging (5 seconds)
+
+        print(f"📧 Attempting to send email via SMTP to {to_email}...")
         socket.setdefaulttimeout(5)
-        
+
         server = smtplib.SMTP(smtp_server, smtp_port, timeout=5)
         server.starttls()
         server.login(smtp_user, smtp_password)
         server.send_message(msg)
         server.quit()
-        
-        print(f"✅ Email sent successfully to {to_email}")
+
+        print(f"✅ Email sent successfully via SMTP to {to_email}")
         return True
-        
-    except socket.timeout:
-        print(f"⏱️  SMTP connection timeout for {to_email} - Email service may be blocked")
-        return False
-    except socket.error as e:
-        print(f"🔌 Network error sending email to {to_email}: {e}")
-        return False
-    except smtplib.SMTPException as e:
-        print(f"📧 SMTP error sending email to {to_email}: {e}")
+
+    except (socket.timeout, socket.error, smtplib.SMTPException) as e:
+        print(f"❌ Email error for {to_email}: {e}")
         return False
     except Exception as e:
-        print(f"❌ Error sending email to {to_email}: {e}")
+        print(f"❌ Unexpected error sending email to {to_email}: {e}")
         return False
     finally:
-        # Reset socket timeout to default
         socket.setdefaulttimeout(None)
+
 
 def check_and_trigger_alerts(product, db):
     """

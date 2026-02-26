@@ -163,48 +163,60 @@ def send_low_stock_alert(product, recipients, db):
     
     notifications_sent = []
     
-    # Send to managers and admins (only valid emails)
+    # Send to managers and admins (ALWAYS log notification)
     for recipient_type in ['managers', 'admins']:
         if recipient_type in recipients:
             for email in recipients[recipient_type]:
                 # Validate email before sending
                 if not is_valid_email(email):
-                    print(f"⚠️  Skipping invalid {recipient_type[:-1]} email: {email}")
+                    print(f"⚠️  Invalid {recipient_type[:-1]} email: {email}")
+                    # Still log the notification attempt
+                    log = NotificationLog(
+                        product_id=product.id,
+                        notification_type='low_stock',
+                        recipient_email=email,
+                        recipient_type=recipient_type[:-1],
+                        message=message_body,
+                        status='invalid_email'
+                    )
+                    db.session.add(log)
                     continue
                 
+                # Try to send email
                 success = send_email(email, subject, message_body)
                 
-                # Log notification
+                # ALWAYS log notification regardless of email success
                 log = NotificationLog(
                     product_id=product.id,
                     notification_type='low_stock',
                     recipient_email=email,
                     recipient_type=recipient_type[:-1],  # Remove 's'
                     message=message_body,
-                    status='sent' if success else 'skipped_invalid'
+                    status='sent' if success else 'failed'
                 )
                 db.session.add(log)
                 notifications_sent.append((email, success))
     
-    # Send to vendor if exists and has valid email
-    if product.vendor and 'vendors' in recipients:
+    # Send to vendor if exists (ALWAYS log notification)
+    if product.vendor:
         vendor_email = product.vendor.email
         
+        vendor_message = f"""
+        Low Stock Alert - Prepare Stock
+        
+        Product: {product.name}
+        Current Quantity: {current_qty} {product.unit_type}
+        Threshold: {threshold_qty} {product.unit_type}
+        
+        {"AUTO-REORDER ENABLED: Please prepare to ship stock automatically." if product.auto_reorder_enabled else "Please standby for potential order from warehouse manager."}
+        
+        This is an automated alert from SmartWare Pro Inventory System.
+        """
+        
         if is_valid_email(vendor_email):
-            vendor_message = f"""
-            Low Stock Alert - Prepare Stock
-            
-            Product: {product.name}
-            Current Quantity: {current_qty} {product.unit_type}
-            Threshold: {threshold_qty} {product.unit_type}
-            
-            {"AUTO-REORDER ENABLED: Please prepare to ship stock automatically." if product.auto_reorder_enabled else "Please standby for potential order from warehouse manager."}
-            
-            This is an automated alert from SmartWare Pro Inventory System.
-            """
-            
             success = send_email(vendor_email, subject, vendor_message)
             
+            # ALWAYS log notification
             log = NotificationLog(
                 product_id=product.id,
                 notification_type='vendor_alert',
@@ -216,14 +228,15 @@ def send_low_stock_alert(product, recipients, db):
             db.session.add(log)
             notifications_sent.append((vendor_email, success))
         else:
-            print(f"⚠️  Skipping invalid vendor email: {vendor_email}")
+            print(f"⚠️  Invalid vendor email: {vendor_email}")
+            # Still log the notification attempt
             log = NotificationLog(
                 product_id=product.id,
                 notification_type='vendor_alert',
                 recipient_email=vendor_email,
                 recipient_type='vendor',
-                message="Email not sent - invalid email address",
-                status='skipped_invalid'
+                message=vendor_message,
+                status='invalid_email'
             )
             db.session.add(log)
     
@@ -254,16 +267,16 @@ def send_auto_reorder_notification(product, vendor, db):
     This is an automated request from SmartWare Pro Inventory System.
     """
     
-    # Validate vendor email
+    # Validate vendor email and ALWAYS log notification
     if not is_valid_email(vendor.email):
-        print(f"⚠️  Cannot send auto-reorder: Invalid vendor email: {vendor.email}")
+        print(f"⚠️  Invalid vendor email: {vendor.email}")
         log = NotificationLog(
             product_id=product.id,
             notification_type='auto_reorder',
             recipient_email=vendor.email,
             recipient_type='vendor',
-            message="Email not sent - invalid email address",
-            status='skipped_invalid'
+            message=message_body,
+            status='invalid_email'
         )
         db.session.add(log)
         db.session.commit()
@@ -271,7 +284,7 @@ def send_auto_reorder_notification(product, vendor, db):
     
     success = send_email(vendor.email, subject, message_body)
     
-    # Log notification
+    # ALWAYS log notification regardless of email success
     log = NotificationLog(
         product_id=product.id,
         notification_type='auto_reorder',

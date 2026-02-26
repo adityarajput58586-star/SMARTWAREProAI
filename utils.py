@@ -139,6 +139,8 @@ def send_low_stock_alert(product, recipients, db):
     """
     from models import NotificationLog
     
+    print(f"📨 send_low_stock_alert called for product: {product.name}")
+    
     subject = f"⚠️ Low Stock Alert: {product.name}"
     
     # Prepare message content
@@ -163,10 +165,13 @@ def send_low_stock_alert(product, recipients, db):
     
     notifications_sent = []
     
+    print(f"📧 Processing recipients: {recipients}")
+    
     # Send to managers and admins (ALWAYS log notification)
     for recipient_type in ['managers', 'admins']:
         if recipient_type in recipients:
             for email in recipients[recipient_type]:
+                print(f"  → Processing {recipient_type[:-1]}: {email}")
                 # Validate email before sending
                 if not is_valid_email(email):
                     print(f"⚠️  Invalid {recipient_type[:-1]} email: {email}")
@@ -195,11 +200,13 @@ def send_low_stock_alert(product, recipients, db):
                     status='sent' if success else 'failed'
                 )
                 db.session.add(log)
+                print(f"  ✓ Notification logged: {email} - status: {'sent' if success else 'failed'}")
                 notifications_sent.append((email, success))
     
     # Send to vendor if exists (ALWAYS log notification)
     if product.vendor:
         vendor_email = product.vendor.email
+        print(f"  → Processing vendor: {vendor_email}")
         
         vendor_message = f"""
         Low Stock Alert - Prepare Stock
@@ -226,6 +233,7 @@ def send_low_stock_alert(product, recipients, db):
                 status='sent' if success else 'failed'
             )
             db.session.add(log)
+            print(f"  ✓ Vendor notification logged: {vendor_email} - status: {'sent' if success else 'failed'}")
             notifications_sent.append((vendor_email, success))
         else:
             print(f"⚠️  Invalid vendor email: {vendor_email}")
@@ -239,8 +247,10 @@ def send_low_stock_alert(product, recipients, db):
                 status='invalid_email'
             )
             db.session.add(log)
+            print(f"  ✓ Vendor notification logged: {vendor_email} - status: invalid_email")
     
     db.session.commit()
+    print(f"✅ All notifications committed to database. Total sent: {len(notifications_sent)}")
     return notifications_sent
 
 def send_auto_reorder_notification(product, vendor, db):
@@ -399,53 +409,63 @@ def check_and_trigger_alerts(product, db):
     """
     Check if product is below threshold and trigger appropriate alerts
     """
-    # Calculate threshold
-    threshold_qty = product.threshold_quantity
-    current_qty = product.quantity
-    
-    # Debug info
-    print(f"\n{'='*60}")
-    print(f"🔍 CHECKING ALERTS FOR: {product.name}")
-    print(f"{'='*60}")
-    print(f"Current Quantity: {current_qty} {product.unit_type}")
-    print(f"Threshold Percentage: {product.threshold_percentage}%")
-    print(f"Threshold Quantity: {threshold_qty} {product.unit_type}")
-    print(f"Is Below Threshold: {product.is_below_threshold}")
-    
-    # Get historical max for reference
-    historical_quantities = [h.new_quantity for h in product.stock_history] if product.stock_history else []
-    all_quantities = historical_quantities + [current_qty]
-    max_qty = max(all_quantities) if all_quantities else current_qty
-    print(f"Maximum Quantity Ever: {max_qty} {product.unit_type}")
-    print(f"{'='*60}\n")
-    
-    if not product.is_below_threshold:
-        print(f"✅ Stock level OK - No alert needed\n")
-        return False
-    
-    print(f"⚠️  ALERT TRIGGERED - Stock below threshold!\n")
-    
-    # Get manager and admin emails from AuthorizedUser database
-    from models import AuthorizedUser
-    
-    managers = [user.email for user in AuthorizedUser.query.filter_by(role='manager', is_active=True).all()]
-    admins = [user.email for user in AuthorizedUser.query.filter_by(role='admin', is_active=True).all()]
-    
-    recipients = {
-        'managers': managers,
-        'admins': admins,
-        'vendors': []
-    }
-    
-    # Send low stock alert
-    send_low_stock_alert(product, recipients, db)
-    
-    # If auto-reorder is enabled and vendor exists, send auto-reorder
-    if product.auto_reorder_enabled and product.vendor:
-        send_auto_reorder_notification(product, product.vendor, db)
+    try:
+        # Calculate threshold
+        threshold_qty = product.threshold_quantity
+        current_qty = product.quantity
+        
+        # Debug info
+        print(f"\n{'='*60}")
+        print(f"🔍 CHECKING ALERTS FOR: {product.name}")
+        print(f"{'='*60}")
+        print(f"Current Quantity: {current_qty} {product.unit_type}")
+        print(f"Threshold Percentage: {product.threshold_percentage}%")
+        print(f"Threshold Quantity: {threshold_qty} {product.unit_type}")
+        print(f"Is Below Threshold: {product.is_below_threshold}")
+        
+        # Get historical max for reference
+        historical_quantities = [h.new_quantity for h in product.stock_history] if product.stock_history else []
+        all_quantities = historical_quantities + [current_qty]
+        max_qty = max(all_quantities) if all_quantities else current_qty
+        print(f"Maximum Quantity Ever: {max_qty} {product.unit_type}")
+        print(f"{'='*60}\n")
+        
+        if not product.is_below_threshold:
+            print(f"✅ Stock level OK - No alert needed\n")
+            return False
+        
+        print(f"⚠️  ALERT TRIGGERED - Stock below threshold!\n")
+        
+        # Get manager and admin emails from AuthorizedUser database
+        from models import AuthorizedUser
+        
+        managers = [user.email for user in AuthorizedUser.query.filter_by(role='manager', is_active=True).all()]
+        admins = [user.email for user in AuthorizedUser.query.filter_by(role='admin', is_active=True).all()]
+        
+        print(f"📧 Recipients - Managers: {managers}, Admins: {admins}")
+        
+        recipients = {
+            'managers': managers,
+            'admins': admins,
+            'vendors': []
+        }
+        
+        # Send low stock alert
+        send_low_stock_alert(product, recipients, db)
+        
+        # If auto-reorder is enabled and vendor exists, send auto-reorder
+        if product.auto_reorder_enabled and product.vendor:
+            print(f"🔄 Auto-reorder enabled, sending to vendor: {product.vendor.email}")
+            send_auto_reorder_notification(product, product.vendor, db)
+            return True
+        
         return True
-    
-    return True
+        
+    except Exception as e:
+        print(f"❌ ERROR in check_and_trigger_alerts: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 def update_section_usage(db):
     """

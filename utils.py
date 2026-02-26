@@ -340,15 +340,15 @@ def send_email(to_email, subject, body):
         try:
             print(f"📧 Attempting to send email via SendGrid to {to_email}...")
             from sendgrid import SendGridAPIClient
-            from sendgrid.helpers.mail import Mail, Email, To, Content
+            from sendgrid.helpers.mail import Mail
 
-            sender_email = os.environ.get('EMAIL_USER', 'noreply@smartwarepro.com')
+            sender_email = os.environ.get('EMAIL_USER', 'smartwarepro.app@gmail.com')
 
             message = Mail(
-                from_email=Email(sender_email, "SmartWare Pro"),
-                to_emails=To(to_email),
+                from_email=sender_email,
+                to_emails=to_email,
                 subject=subject,
-                plain_text_content=Content("text/plain", body)
+                html_content=f'<strong>{body}</strong>'
             )
 
             sg = SendGridAPIClient(sendgrid_api_key)
@@ -360,7 +360,7 @@ def send_email(to_email, subject, body):
             else:
                 print(f"⚠️  SendGrid returned status {response.status_code}")
         except ImportError:
-            print(f"⚠️  SendGrid library not installed")
+            print(f"⚠️  SendGrid library not installed. Install with: pip install sendgrid")
         except Exception as e:
             print(f"❌ SendGrid error: {e}")
 

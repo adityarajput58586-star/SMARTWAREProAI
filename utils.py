@@ -328,6 +328,7 @@ def send_email(to_email, subject, body):
     Validates email address before attempting to send
     """
     import os
+    import socket
     
     # Validate email address first
     if not is_valid_email(to_email):
@@ -341,7 +342,7 @@ def send_email(to_email, subject, body):
         smtp_user = os.environ.get('EMAIL_USER')  # Use EMAIL_USER consistently
         smtp_password = os.environ.get('EMAIL_PASSWORD')  # Use EMAIL_PASSWORD consistently
         
-        # If no SMTP credentials, just log to console
+        # If no SMTP credentials, just log to console and return success
         if not smtp_user or not smtp_password:
             print(f"\n{'='*60}")
             print(f"📧 EMAIL NOTIFICATION (Console Mode - No SMTP Configured)")
@@ -389,9 +390,13 @@ def send_email(to_email, subject, body):
         msg.attach(MIMEText(body, 'plain'))
         msg.attach(MIMEText(html_body, 'html'))
         
-        # Send email
-        print(f"📧 Sending email to {to_email}...")
-        server = smtplib.SMTP(smtp_server, smtp_port)
+        # Send email with timeout
+        print(f"📧 Attempting to send email to {to_email}...")
+        
+        # Set socket timeout to prevent hanging (5 seconds)
+        socket.setdefaulttimeout(5)
+        
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=5)
         server.starttls()
         server.login(smtp_user, smtp_password)
         server.send_message(msg)
@@ -400,10 +405,21 @@ def send_email(to_email, subject, body):
         print(f"✅ Email sent successfully to {to_email}")
         return True
         
+    except socket.timeout:
+        print(f"⏱️  SMTP connection timeout for {to_email} - Email service may be blocked")
+        return False
+    except socket.error as e:
+        print(f"🔌 Network error sending email to {to_email}: {e}")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"📧 SMTP error sending email to {to_email}: {e}")
+        return False
     except Exception as e:
         print(f"❌ Error sending email to {to_email}: {e}")
-        print(f"   Make sure SMTP credentials are correct in .env file")
         return False
+    finally:
+        # Reset socket timeout to default
+        socket.setdefaulttimeout(None)
 
 def check_and_trigger_alerts(product, db):
     """

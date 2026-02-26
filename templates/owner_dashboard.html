@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+
+{% block title %}Owner Dashboard - SmartWare Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .owner-header {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 1rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+    
+    .stat-card {
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 2rem;
+        background: var(--surface);
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+    }
+    
+    .stat-card:hover {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+    }
+    
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+    
+    .password-display {
+        font-family: 'Courier New', monospace;
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #4f46e5;
+    }
+    
+    [data-bs-theme="dark"] .password-display {
+        background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+        color: #818cf8;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="owner-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h2 class="mb-2"><i class="fas fa-crown me-2"></i>Owner Dashboard</h2>
+                <p class="mb-0 opacity-90">Manage authorized users and access control</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('owner_add_user') }}" class="btn btn-light">
+                    <i class="fas fa-user-plus me-2"></i>Add User
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ stats.active_users }}</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ stats.inactive_users }}</div>
+                <div class="stat-label">Inactive Users</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stat-card">
+                <div class="stat-number" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{{ stats.companies }}</div>
+                <div class="stat-label">Companies</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-users me-2"></i>Authorized Users</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Password</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Last Login</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ user.company_name }}</span></td>
+                            <td><strong>{{ user.name }}</strong></td>
+                            <td class="text-muted">{{ user.email }}</td>
+                            <td>
+                                <span class="password-display">{{ user.password }}</span>
+                                <button class="btn btn-sm btn-outline-secondary ms-1" onclick="copyToClipboard('{{ user.password }}', this)" title="Copy password">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </td>
+                            <td>
+                                {% if user.role == 'admin' %}
+                                    <span class="badge bg-danger">Admin</span>
+                                {% elif user.role == 'manager' %}
+                                    <span class="badge bg-warning">Manager</span>
+                                {% elif user.role == 'employee' %}
+                                    <span class="badge bg-info">Employee</span>
+                                {% elif user.role == 'scanner' %}
+                                    <span class="badge bg-secondary">Scanner</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
+                                {% else %}
+                                    <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-muted">
+                                {% if user.last_login %}
+                                    <small>{{ user.last_login.strftime('%Y-%m-%d %H:%M') }}</small>
+                                {% else %}
+                                    <small class="text-muted">Never</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ url_for('owner_edit_user', user_id=user.id) }}" class="btn btn-sm btn-outline-primary" title="Edit user">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="confirmDelete({{ user.id }}, '{{ user.name }}')" title="Delete user">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete user <strong id="deleteUserName"></strong>?</p>
+                <p class="text-danger mb-0"><i class="fas fa-info-circle me-1"></i>This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="#" id="confirmDeleteBtn" class="btn btn-danger"><i class="fas fa-trash me-2"></i>Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(userId, userName) {
+    document.getElementById('deleteUserName').textContent = userName;
+    document.getElementById('confirmDeleteBtn').href = `/owner/user/delete/${userId}`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 1500);
+    });
+}
+</script>
+{% endblock %}

@@ -3,7 +3,7 @@
 {% block title %}Dashboard - SmartWare Pro{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container py-4">
     <!-- Low Stock Alert Section -->
     {% if low_stock_products %}
     <div class="row mb-4">
@@ -197,8 +197,11 @@
                         <input type="number" class="form-control" id="editProductQuantity" name="quantity" min="0" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editProductLocation" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="editProductLocation" name="location" required>
+                        <label for="editProductLocation" class="form-label">Primary Location</label>
+                        <select class="form-select" id="editProductLocation" name="location">
+                            <!-- Will be populated dynamically -->
+                        </select>
+                        <div class="form-text">Current storage locations will be shown</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -218,8 +221,37 @@
         document.getElementById('editProductId').value = id;
         document.getElementById('editProductName').value = name;
         document.getElementById('editProductQuantity').value = quantity;
-        document.getElementById('editProductLocation').value = location;
         document.getElementById('editProductForm').action = '/edit/' + id;
+        
+        // Populate location dropdown
+        fetch('/api/sections')
+            .then(response => response.json())
+            .then(sections => {
+                const dropdown = document.getElementById('editProductLocation');
+                dropdown.innerHTML = '';
+                
+                sections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.name;
+                    option.textContent = `${section.name} (${section.available_space}/${section.capacity} available)`;
+                    
+                    // Select current location if it matches
+                    if (location.includes(section.name)) {
+                        option.selected = true;
+                    }
+                    
+                    dropdown.appendChild(option);
+                });
+                
+                // If no match found, add current location as option
+                if (!dropdown.value) {
+                    const option = document.createElement('option');
+                    option.value = location;
+                    option.textContent = location;
+                    option.selected = true;
+                    dropdown.insertBefore(option, dropdown.firstChild);
+                }
+            });
         
         new bootstrap.Modal(document.getElementById('editProductModal')).show();
     }

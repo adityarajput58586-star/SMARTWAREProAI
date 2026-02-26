@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Warehouse Configuration - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('warehouse_sections') }}">Sections</a></li>
+                    <li class="breadcrumb-item active">Configuration</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-cog me-2"></i>Warehouse Configuration</h2>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-warehouse me-2"></i>Warehouse Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="warehouse_name" class="form-label">Warehouse Name</label>
+                            <input type="text" class="form-control" id="warehouse_name" name="warehouse_name" 
+                                   value="{{ config.warehouse_name }}" required>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="total_space" class="form-label">Total Warehouse Space</label>
+                                    <input type="number" class="form-control" id="total_space" name="total_space" 
+                                           value="{{ config.total_space }}" min="{{ config.used_space }}" required>
+                                    <div class="form-text">
+                                        Currently used: {{ config.used_space }} units
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="space_unit" class="form-label">Space Unit</label>
+                                    <select class="form-select" id="space_unit" name="space_unit">
+                                        <option value="units" {{ 'selected' if config.space_unit == 'units' }}>Units</option>
+                                        <option value="sq_meters" {{ 'selected' if config.space_unit == 'sq_meters' }}>Square Meters</option>
+                                        <option value="sq_feet" {{ 'selected' if config.space_unit == 'sq_feet' }}>Square Feet</option>
+                                        <option value="pallets" {{ 'selected' if config.space_unit == 'pallets' }}>Pallets</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Total space cannot be less than currently used space ({{ config.used_space }} {{ config.space_unit }})
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Configuration
+                        </button>
+                        <a href="{{ url_for('warehouse_sections') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie me-2"></i>Space Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6>Total Space</h6>
+                        <h3>{{ config.total_space }} <small class="text-muted">{{ config.space_unit }}</small></h3>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Used Space</h6>
+                        <h3 class="text-primary">{{ config.used_space }} <small class="text-muted">{{ config.space_unit }}</small></h3>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" style="width: {{ config.usage_percentage }}%"></div>
+                        </div>
+                        <small class="text-muted">{{ "%.1f"|format(config.usage_percentage) }}% of total</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6>Available Space</h6>
+                        <h3 class="text-success">{{ config.available_space }} <small class="text-muted">{{ config.space_unit }}</small></h3>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div>
+                        <h6>Sections</h6>
+                        <p class="mb-1"><strong>{{ sections|length }}</strong> sections configured</p>
+                        <small class="text-muted">Total capacity from all sections: {{ config.used_space }} {{ config.space_unit }}</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6><i class="fas fa-info-circle me-2"></i>Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="small mb-0">
+                        <li>Set total space when first setting up the warehouse</li>
+                        <li>Section capacities cannot exceed available space</li>
+                        <li>You can increase total space anytime</li>
+                        <li>Cannot reduce below currently used space</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

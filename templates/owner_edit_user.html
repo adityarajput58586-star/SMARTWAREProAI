@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Edit User - Owner Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-edit"></i> Edit Authorized User</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="company_name" class="form-label">Company Name</label>
+                            <input type="text" class="form-control" id="company_name" name="company_name" value="{{ user.company_name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin - Full access</option>
+                                <option value="manager" {% if user.role == 'manager' %}selected{% endif %}>Manager - Manage inventory & vendors</option>
+                                <option value="employee" {% if user.role == 'employee' %}selected{% endif %}>Employee - View & basic operations</option>
+                                <option value="scanner" {% if user.role == 'scanner' %}selected{% endif %}>Scanner - Mobile scanning only</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="{{ user.password }}" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('{{ user.password }}')">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">New Password (optional)</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="password" name="password" placeholder="Leave empty to keep current password">
+                                <button class="btn btn-outline-secondary" type="button" onclick="generatePassword()">
+                                    <i class="fas fa-random"></i> Generate
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if user.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Account Active
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Inactive users cannot login</small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>User Info:</strong><br>
+                            Created: {{ user.created_at.strftime('%Y-%m-%d %H:%M') }}<br>
+                            Last Login: {% if user.last_login %}{{ user.last_login.strftime('%Y-%m-%d %H:%M') }}{% else %}Never{% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update User
+                            </button>
+                            <a href="{{ url_for('owner_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function generatePassword() {
+    try {
+        const response = await fetch('/owner/generate_password');
+        const data = await response.json();
+        document.getElementById('password').value = data.password;
+    } catch (error) {
+        console.error('Error generating password:', error);
+        alert('Failed to generate password');
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Password copied to clipboard!');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Remove Stock - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-minus-circle me-2"></i>Remove Stock: {{ product.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Current Stock Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Product:</th>
+                                <td>{{ product.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Category:</th>
+                                <td>{{ product.category }}</td>
+                            </tr>
+                            <tr>
+                                <th>Current Quantity:</th>
+                                <td><span class="badge bg-info">{{ product.quantity }} {{ product.unit_type }}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Total Batches:</th>
+                                <td>{{ batch_details|length }} batches</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Current Batches (FIFO Order)</h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>FIFO:</strong> Oldest stock will be removed first
+                        </div>
+                        <div class="list-group">
+                            {% for detail in batch_details %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-muted">{{ detail.batch.arrival_date.strftime('%Y-%m-%d') }}</small>
+                                        <br>
+                                        <strong>{{ detail.section.name }}</strong>
+                                    </div>
+                                    <span class="badge bg-success">{{ detail.batch.quantity }} {{ product.unit_type }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity to Remove</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               min="1" max="{{ product.quantity }}" required>
+                        <div class="form-text">
+                            Maximum: {{ product.quantity }} {{ product.unit_type }} available
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason</label>
+                        <select class="form-select" id="reason" name="reason">
+                            <option value="Sale">Sale</option>
+                            <option value="Usage">Usage</option>
+                            <option value="Damaged">Damaged</option>
+                            <option value="Expired">Expired</option>
+                            <option value="Transfer">Transfer</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>FIFO Processing:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Stock will be removed from oldest batches first</li>
+                            <li>Warehouse sections will automatically free up space</li>
+                            <li>If quantity drops below 30%, alerts will be triggered</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-minus-circle me-1"></i>Remove Stock
+                        </button>
+                        <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

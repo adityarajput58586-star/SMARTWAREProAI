@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+
+{% block title %}Warehouse Sections - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Warehouse Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2"><i class="fas fa-warehouse me-2"></i>{{ config.warehouse_name }}</h4>
+                            <div class="progress" style="height: 30px;">
+                                <div class="progress-bar {{ 'bg-success' if config.usage_percentage < 70 else 'bg-warning' if config.usage_percentage < 90 else 'bg-danger' }}" 
+                                     style="width: {{ config.usage_percentage }}%">
+                                    {{ "%.1f"|format(config.usage_percentage) }}% Used
+                                </div>
+                            </div>
+                            <small class="text-muted mt-2 d-block">
+                                {{ config.used_space }}/{{ config.total_space }} {{ config.space_unit }} used | 
+                                {{ config.available_space }} {{ config.space_unit }} available
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {% if session.role == 'admin' %}
+                            <a href="{{ url_for('warehouse_config') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-cog me-2"></i>Configure Warehouse
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-map-marked-alt me-2"></i>Warehouse Sections</h2>
+                <button class="btn btn-primary" onclick="openAddSectionModal()">
+                    <i class="fas fa-plus me-2"></i>Add Section
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-list me-2"></i>All Sections ({{ sections|length }})</h5>
+                </div>
+                <div class="card-body">
+                    {% if sections %}
+                    <div class="row">
+                        {% for section in sections %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100" style="border-left: 4px solid {{ section.color }};">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h5 class="card-title mb-1">{{ section.name }}</h5>
+                                            <small class="text-muted">Capacity: {{ section.capacity }} units</small>
+                                        </div>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-warning" 
+                                                    onclick="openEditSectionModal({{ section.id }}, '{{ section.name }}', {{ section.capacity }}, {{ section.x_coordinate }}, {{ section.y_coordinate }}, {{ section.width }}, {{ section.height }}, '{{ section.color }}')"
+                                                    title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if session.role == 'admin' %}
+                                            <a href="{{ url_for('delete_section', section_id=section.id) }}" 
+                                               class="btn btn-outline-danger"
+                                               onclick="return confirm('Delete section {{ section.name }}?')"
+                                               title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between text-sm mb-1">
+                                            <span>Usage:</span>
+                                            <span><strong>{{ section.current_usage }}/{{ section.capacity }}</strong></span>
+                                        </div>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {{ 'bg-success' if section.usage_percentage < 70 else 'bg-warning' if section.usage_percentage < 90 else 'bg-danger' }}" 
+                                                 style="width: {{ section.usage_percentage }}%">
+                                                {{ "%.1f"|format(section.usage_percentage) }}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <span class="badge {{ 'bg-success' if section.available_space > 50 else 'bg-warning text-dark' if section.available_space > 0 else 'bg-danger' }}">
+                                            <i class="fas fa-box me-1"></i>{{ section.available_space }} available
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No sections configured</h5>
+                        <button class="btn btn-primary mt-3" onclick="openAddSectionModal()">
+                            <i class="fas fa-plus me-2"></i>Add First Section
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Section Modal -->
+<div class="modal fade" id="addSectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Warehouse Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_section') }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Available space: <strong>{{ config.available_space }} {{ config.space_unit }}</strong>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sectionName" class="form-label">Section Name</label>
+                                <input type="text" class="form-control" id="sectionName" name="name" 
+                                       placeholder="e.g., Section F" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="sectionCapacity" class="form-label">Capacity (units)</label>
+                                <input type="number" class="form-control" id="sectionCapacity" name="capacity" 
+                                       min="1" max="{{ config.available_space }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="sectionX" class="form-label">X Position</label>
+                                <input type="number" class="form-control" id="sectionX" name="x_coordinate" 
+                                       value="50" min="0" step="10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="sectionY" class="form-label">Y Position</label>
+                                <input type="number" class="form-control" id="sectionY" name="y_coordinate" 
+                                       value="50" min="0" step="10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="sectionWidth" class="form-label">Width</label>
+                                <input type="number" class="form-control" id="sectionWidth" name="width" 
+                                       value="180" min="50" step="10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="sectionHeight" class="form-label">Height</label>
+                                <input type="number" class="form-control" id="sectionHeight" name="height" 
+                                       value="150" min="50" step="10">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="sectionColor" class="form-label">Section Color</label>
+                        <input type="color" class="form-control form-control-color" id="sectionColor" name="color" 
+                               value="#e3f2fd">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Section Modal -->
+<div class="modal fade" id="editSectionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Warehouse Section</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editSectionForm" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editSectionName" class="form-label">Section Name</label>
+                                <input type="text" class="form-control" id="editSectionName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editSectionCapacity" class="form-label">Capacity (units)</label>
+                                <input type="number" class="form-control" id="editSectionCapacity" name="capacity" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="editSectionX" class="form-label">X Position</label>
+                                <input type="number" class="form-control" id="editSectionX" name="x_coordinate" 
+                                       min="0" step="10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="editSectionY" class="form-label">Y Position</label>
+                                <input type="number" class="form-control" id="editSectionY" name="y_coordinate" 
+                                       min="0" step="10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="editSectionWidth" class="form-label">Width</label>
+                                <input type="number" class="form-control" id="editSectionWidth" name="width" 
+                                       min="50" step="10">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="editSectionHeight" class="form-label">Height</label>
+                                <input type="number" class="form-control" id="editSectionHeight" name="height" 
+                                       min="50" step="10">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="editSectionColor" class="form-label">Section Color</label>
+                        <input type="color" class="form-control form-control-color" id="editSectionColor" name="color">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Section</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function openAddSectionModal() {
+        new bootstrap.Modal(document.getElementById('addSectionModal')).show();
+    }
+    
+    function openEditSectionModal(id, name, capacity, x, y, width, height, color) {
+        document.getElementById('editSectionName').value = name;
+        document.getElementById('editSectionCapacity').value = capacity;
+        document.getElementById('editSectionX').value = x;
+        document.getElementById('editSectionY').value = y;
+        document.getElementById('editSectionWidth').value = width;
+        document.getElementById('editSectionHeight').value = height;
+        document.getElementById('editSectionColor').value = color;
+        document.getElementById('editSectionForm').action = '/section/edit/' + id;
+        
+        new bootstrap.Modal(document.getElementById('editSectionModal')).show();
+    }
+</script>
+{% endblock %}

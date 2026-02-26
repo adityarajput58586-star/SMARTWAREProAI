@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2><i class="fas fa-bell me-2"></i>Notification Logs</h2>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Notifications (Last 100)</h5>
+                    {% if logs %}
+                    <form method="POST" action="{{ url_for('delete_all_notifications') }}" style="display: inline;">
+                        <button type="submit" class="btn btn-danger btn-sm" 
+                                onclick="return confirm('Are you sure you want to delete all notifications? This cannot be undone.')">
+                            <i class="fas fa-trash-alt me-1"></i>Delete All
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Recipient</th>
+                                    <th>Product</th>
+                                    <th>Status</th>
+                                    <th>Message</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>{{ log.sent_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <span class="badge {{ 'bg-warning text-dark' if log.notification_type == 'low_stock' else 'bg-info' if log.notification_type == 'vendor_alert' else 'bg-success' }}">
+                                            {{ log.notification_type.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {{ log.recipient_email }}
+                                        <br>
+                                        <small class="text-muted">({{ log.recipient_type }})</small>
+                                    </td>
+                                    <td>
+                                        {% if log.product_id %}
+                                        <a href="{{ url_for('product_detail', product_id=log.product_id) }}">
+                                            Product #{{ log.product_id }}
+                                        </a>
+                                        {% else %}
+                                        N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge {{ 'bg-success' if log.status == 'sent' else 'bg-danger' }}">
+                                            {{ log.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                onclick="showMessage({{ log.id }})"
+                                                data-message="{{ log.message }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No notifications sent yet</h5>
+                        <p class="text-muted">Notifications will appear here when stock alerts are triggered</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-envelope me-2"></i>Notification Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="messageContent" style="white-space: pre-wrap; font-family: monospace;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function showMessage(logId) {
+        const button = event.target.closest('button');
+        const message = button.getAttribute('data-message');
+        document.getElementById('messageContent').textContent = message;
+        new bootstrap.Modal(document.getElementById('messageModal')).show();
+    }
+</script>
+{% endblock %}

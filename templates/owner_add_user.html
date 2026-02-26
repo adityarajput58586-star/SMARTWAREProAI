@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Add User - Owner Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-user-plus"></i> Add New Authorized User</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="company_name" class="form-label">Company Name</label>
+                            <input type="text" class="form-control" id="company_name" name="company_name" required>
+                            <small class="form-text text-muted">The company/warehouse using this account</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <small class="form-text text-muted">This will be used for login</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="admin">Admin - Full access</option>
+                                <option value="manager">Manager - Manage inventory & vendors</option>
+                                <option value="employee">Employee - View & basic operations</option>
+                                <option value="scanner">Scanner - Mobile scanning only</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="auto_generate" name="auto_generate" checked onchange="togglePasswordField()">
+                                <label class="form-check-label" for="auto_generate">
+                                    Auto-generate secure password
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="password_field" style="display: none;">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="password" name="password">
+                                <button class="btn btn-outline-secondary" type="button" onclick="generatePassword()">
+                                    <i class="fas fa-random"></i> Generate
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">Leave empty to auto-generate</small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Add User
+                            </button>
+                            <a href="{{ url_for('owner_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePasswordField() {
+    const autoGenerate = document.getElementById('auto_generate').checked;
+    const passwordField = document.getElementById('password_field');
+    const passwordInput = document.getElementById('password');
+    
+    if (autoGenerate) {
+        passwordField.style.display = 'none';
+        passwordInput.required = false;
+    } else {
+        passwordField.style.display = 'block';
+        passwordInput.required = true;
+    }
+}
+
+async function generatePassword() {
+    try {
+        const response = await fetch('/owner/generate_password');
+        const data = await response.json();
+        document.getElementById('password').value = data.password;
+    } catch (error) {
+        console.error('Error generating password:', error);
+        alert('Failed to generate password');
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    togglePasswordField();
+});
+</script>
+{% endblock %}

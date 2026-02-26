@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Receive Stock - SmartWare Pro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-truck-loading me-2"></i>Receive New Stock: {{ product.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>Current Stock Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Product:</th>
+                                <td>{{ product.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Current Quantity:</th>
+                                <td><span class="badge bg-info">{{ product.quantity }} {{ product.unit_type }}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Current Locations:</th>
+                                <td>{{ product.location }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Available Sections</h6>
+                        <div class="list-group">
+                            {% for section in sections %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ section.name }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            {{ section.current_usage }}/{{ section.capacity }} used
+                                        </small>
+                                    </div>
+                                    <div>
+                                        {% if section.available_space > 50 %}
+                                            {% set badge_class = 'bg-success' %}
+                                        {% elif section.available_space > 0 %}
+                                            {% set badge_class = 'bg-warning text-dark' %}
+                                        {% else %}
+                                            {% set badge_class = 'bg-danger' %}
+                                        {% endif %}
+                                        <span class="badge {{ badge_class }}">
+                                            {{ section.available_space }} available
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    {% if section.usage_percentage < 70 %}
+                                        {% set bar_class = 'bg-success' %}
+                                    {% elif section.usage_percentage < 90 %}
+                                        {% set bar_class = 'bg-warning' %}
+                                    {% else %}
+                                        {% set bar_class = 'bg-danger' %}
+                                    {% endif %}
+                                    {% set bar_width = section.usage_percentage|string + '%' %}
+                                    <div class="progress-bar {{ bar_class }}" 
+                                         style="width: {{ bar_width }};"></div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity to Receive</label>
+                        <input type="number" class="form-control" id="quantity" name="quantity" 
+                               min="1" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="preferred_section" class="form-label">Preferred Section (Optional)</label>
+                        <select class="form-select" id="preferred_section" name="preferred_section">
+                            <option value="">Auto-select best sections</option>
+                            {% for section in sections %}
+                            <option value="{{ section.id }}">
+                                {{ section.name }} - {{ section.available_space }}/{{ section.capacity }} available
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            If selected section can't fit all, system will auto-extend or overflow to nearby sections
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-magic me-2"></i>
+                        <strong>Smart Overflow Handling:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>✨ <strong>Auto-Extend:</strong> If warehouse has space, section capacity increases automatically</li>
+                            <li>🔄 <strong>Overflow:</strong> Excess units stored in nearby sections with clear labels</li>
+                            <li>📊 <strong>Tracking:</strong> System tracks which units are in overflow locations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check me-1"></i>Receive Stock
+                        </button>
+                        <a href="{{ url_for('product_detail', product_id=product.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

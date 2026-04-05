@@ -1,6 +1,6 @@
 /**
  * QR/Barcode Scanner using getUserMedia API
- * SmartWare Pro - Warehouse Management System
+ * SIFWO (smart inventry Flow warehouse operations) - Warehouse Management System
  */
 
 class QRScanner {

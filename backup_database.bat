@@ -1,8 +1,8 @@
 @echo off
-REM SmartWare Pro Database Backup Script
+REM SIFWO (smart inventry Flow warehouse operations) Database Backup Script
 
 echo ========================================
-echo SmartWare Pro - Database Backup
+echo SIFWO (smart inventry Flow warehouse operations) - Database Backup
 echo ========================================
 echo.
 

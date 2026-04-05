@@ -160,7 +160,7 @@ def create_email_html(subject, body, notification_type='low_stock'):
                         <tr>
                             <td style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 30px; text-align: center;">
                                 <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600;">
-                                    📦 SmartWare Pro
+                                    📦 SIFWO (smart inventry Flow warehouse operations)
                                 </h1>
                                 <p style="margin: 5px 0 0 0; color: #94a3b8; font-size: 14px;">
                                     Warehouse Management System
@@ -194,7 +194,7 @@ def create_email_html(subject, body, notification_type='low_stock'):
                         <tr>
                             <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
                                 <p style="margin: 0; color: #94a3b8; font-size: 12px;">
-                                    This is an automated notification from SmartWare Pro<br>
+                                    This is an automated notification from SIFWO (smart inventry Flow warehouse operations)<br>
                                     Please do not reply to this email
                                 </p>
                             </td>
@@ -237,7 +237,7 @@ def send_low_stock_alert(product, recipients, db):
     - Managers: Please review and place order if needed
     - Vendor: Please prepare stock for potential order
     
-    This is an automated alert from SmartWare Pro Inventory System.
+    This is an automated alert from SIFWO (smart inventry Flow warehouse operations) Inventory System.
     """
     
     notifications_sent = []
@@ -294,7 +294,7 @@ def send_low_stock_alert(product, recipients, db):
         
         {"AUTO-REORDER ENABLED: Please prepare to ship stock automatically." if product.auto_reorder_enabled else "Please standby for potential order from warehouse manager."}
         
-        This is an automated alert from SmartWare Pro Inventory System.
+        This is an automated alert from SIFWO (smart inventry Flow warehouse operations) Inventory System.
         """
         
         if is_valid_email(vendor_email):
@@ -350,10 +350,10 @@ def send_auto_reorder_notification(product, vendor, db):
     
     This is an AUTOMATIC reorder. Please prepare and ship the stock.
     
-    Warehouse: SmartWare Pro
+    Warehouse: SIFWO (smart inventry Flow warehouse operations)
     Date: {get_ist_time().strftime('%Y-%m-%d %H:%M IST')}
     
-    This is an automated request from SmartWare Pro Inventory System.
+    This is an automated request from SIFWO (smart inventry Flow warehouse operations) Inventory System.
     """
     
     # Validate vendor email and ALWAYS log notification
@@ -460,7 +460,7 @@ def send_email(to_email, subject, body, notification_type='low_stock'):
             return True
 
         msg = MIMEMultipart('alternative')
-        msg['From'] = f"SmartWare Pro <{smtp_user}>"
+        msg['From'] = f"SIFWO (smart inventry Flow warehouse operations) <{smtp_user}>"
         msg['To'] = to_email
         msg['Subject'] = subject
         msg.attach(MIMEText(body, 'plain'))

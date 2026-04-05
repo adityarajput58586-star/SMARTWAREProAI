@@ -29,7 +29,7 @@ from database import db
 
 # Create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "smartware-pro-secret-key")
+app.secret_key = os.environ.get("SESSION_SECRET", "sifwo-secret-key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the database
@@ -47,7 +47,7 @@ from models import Product, StockHistory, Vendor, WarehouseSection, StockBatch, 
 from utils import suggest_storage_locations, check_and_trigger_alerts, update_section_usage
 
 # Owner credentials (hardcoded)
-OWNER_EMAIL = "owner@smartwarepro.com"
+OWNER_EMAIL = "owner@sifwo.com"
 OWNER_PASSWORD = "owner2024"
 
 # Create tables and initialize data
@@ -60,28 +60,28 @@ with app.app_context():
         default_users = [
             AuthorizedUser(
                 company_name="Demo Company",
-                email="admin@smartware.com",
+                email="admin@sifwo.com",
                 password="admin123",
                 name="System Administrator",
                 role="admin"
             ),
             AuthorizedUser(
                 company_name="Demo Company",
-                email="manager@smartware.com",
+                email="manager@sifwo.com",
                 password="manager123",
                 name="Warehouse Manager",
                 role="manager"
             ),
             AuthorizedUser(
                 company_name="Demo Company",
-                email="employee1@smartware.com",
+                email="employee1@sifwo.com",
                 password="emp123",
                 name="John Smith",
                 role="employee"
             ),
             AuthorizedUser(
                 company_name="Demo Company",
-                email="scanner@smartware.com",
+                email="scanner@sifwo.com",
                 password="scan789",
                 name="Mobile Scanner User",
                 role="scanner"
@@ -119,27 +119,27 @@ with app.app_context():
 
 # User credentials with roles (kept for backward compatibility, but will be replaced by AuthorizedUser)
 USERS = {
-    "admin@smartware.com": {
+    "admin@sifwo.com": {
         "password": "admin123",
         "role": "admin",
         "name": "System Administrator"
     },
-    "manager@smartware.com": {
+    "manager@sifwo.com": {
         "password": "manager123",
         "role": "manager",
         "name": "Warehouse Manager"
     },
-    "employee1@smartware.com": {
+    "employee1@sifwo.com": {
         "password": "emp123",
         "role": "employee",
         "name": "John Smith"
     },
-    "employee2@smartware.com": {
+    "employee2@sifwo.com": {
         "password": "emp456",
         "role": "employee",
         "name": "Sarah Johnson"
     },
-    "scanner@smartware.com": {
+    "scanner@sifwo.com": {
         "password": "scan789",
         "role": "scanner",
         "name": "Mobile Scanner User"
@@ -673,7 +673,7 @@ def export_pdf():
     content = []
     
     # Title
-    title = Paragraph("SmartWare Pro - Inventory Report", title_style)
+    title = Paragraph("SIFWO (smart inventry Flow warehouse operations) - Inventory Report", title_style)
     content.append(title)
     content.append(Spacer(1, 12))
     

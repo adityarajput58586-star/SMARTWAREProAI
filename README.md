@@ -1,4 +1,4 @@
-# SmartWare Pro - Warehouse Management System
+# SIFWO (smart inventry Flow warehouse operations) - Warehouse Management System
 
 A comprehensive warehouse management system built with Flask, featuring real-time inventory tracking, smart overflow management, QR code scanning, and automated email alerts.
 
@@ -27,7 +27,7 @@ pip install -r requirements.txt
 ```
 # Option 1: SendGrid (Recommended for Render - works on free tier)
 SENDGRID_API_KEY=your-sendgrid-api-key
-EMAIL_USER=noreply@smartwarepro.com
+EMAIL_USER=noreply@sifwo.com
 
 # Option 2: SMTP (Gmail - may be blocked on some platforms)
 EMAIL_USER=your-email@gmail.com

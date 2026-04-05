@@ -1,10 +1,10 @@
 /**
- * SmartWare Pro - Main JavaScript Module
+ * SIFWO (smart inventry Flow warehouse operations) - Main JavaScript Module
  * Warehouse Management System
  */
 
 // Main application object
-const SmartWarePro = {
+const SIFWO = {
     // Configuration
     config: {
         debounceDelay: 300,
@@ -20,7 +20,7 @@ const SmartWarePro = {
         this.setupSearchFunctionality();
         this.setupAnimations();
         this.setupAccessibility();
-        console.log('SmartWare Pro initialized successfully');
+        console.log('SIFWO (smart inventry Flow warehouse operations) initialized successfully');
     },
 
     // Setup global event listeners
@@ -616,8 +616,8 @@ const SmartWarePro = {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    SmartWarePro.init();
+    SIFWO.init();
 });
 
 // Export for global use
-window.SmartWarePro = SmartWarePro;
+window.SIFWO = SIFWO;

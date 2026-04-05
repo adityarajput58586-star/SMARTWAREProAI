@@ -1,8 +1,8 @@
 @echo off
-REM SmartWare Pro - Email Setup Script
+REM SIFWO (smart inventry Flow warehouse operations) - Email Setup Script
 
 echo ========================================
-echo SmartWare Pro - Email Setup
+echo SIFWO (smart inventry Flow warehouse operations) - Email Setup
 echo ========================================
 echo.
 
@@ -21,7 +21,7 @@ if exist ".env.example" (
 ) else (
     echo Creating .env file...
     (
-        echo # SmartWare Pro - Email Configuration
+        echo # SIFWO (smart inventry Flow warehouse operations) - Email Configuration
         echo.
         echo # Gmail Configuration
         echo EMAIL_USER=your-email@gmail.com
